@@ -1,0 +1,150 @@
+{
+  "env_name": "MountainCarContinuous-v0",
+  "env_properties": {
+    "observation_space": "Box([-1.2  -0.07], [0.6  0.07], (2,), float32)",
+    "action_space": "Box(-1.0, 1.0, (1,), float32)",
+    "observation_shape": [
+      2
+    ],
+    "action_shape": [
+      1
+    ]
+  },
+  "hierarchy": {
+    "levels": [
+      2,
+      1
+    ],
+    "activation_funcs": {
+      "perception": [
+        "smooth",
+        "smooth"
+      ],
+      "reference": [
+        "smooth",
+        "linear"
+      ],
+      "output": [
+        "smooth",
+        "smooth"
+      ],
+      "actions": "linear"
+    },
+    "smooth_factors": {
+      "perception": [
+        [
+          0.040053486824035645,
+          0.2361147403717041
+        ],
+        [
+          0.7641976475715637
+        ]
+      ],
+      "reference": [
+        [
+          0.1712586134672165,
+          0.789747953414917
+        ],
+        0.5
+      ],
+      "output": [
+        [
+          0.010880609042942524,
+          0.8412594795227051
+        ],
+        [
+          0.5399395823478699
+        ]
+      ],
+      "actions": 0.5
+    },
+    "weight_types": [
+      "float",
+      "float"
+    ],
+    "obs_connection_level": 0,
+    "top_reference_weight_init": "ones",
+    "reference_values": [
+      0.44999998807907104
+    ],
+    "evolve_references": false,
+    "top_level_obs_indices": [
+      0
+    ],
+    "zerolevel_inputs_indexes": [
+      1
+    ]
+  },
+  "weights": {
+    "PL01": [
+      1.0
+    ],
+    "RL01": [
+      1.0
+    ],
+    "PL01_smooth": [
+      0.7641976475715637
+    ],
+    "OL01": [
+      1.291236162185669
+    ],
+    "OL01_smooth": [
+      0.5399395823478699
+    ],
+    "RL00": [
+      [
+        3.6717123985290527,
+        2.2447457313537598
+      ]
+    ],
+    "PL00": [
+      [
+        1.0,
+        1.0
+      ]
+    ],
+    "RL00_smooth": [
+      0.1712586134672165,
+      0.789747953414917
+    ],
+    "PL00_smooth": [
+      0.040053486824035645,
+      0.2361147403717041
+    ],
+    "OL00": [
+      -0.6781355738639832,
+      1.7601945400238037
+    ],
+    "OL00_smooth": [
+      0.010880609042942524,
+      0.8412594795227051
+    ],
+    "Actions": [
+      [
+        1.0
+      ],
+      [
+        1.0
+      ]
+    ]
+  },
+  "biases": {},
+  "layer_parameters": {},
+  "fixed_weights": [
+    "RL01"
+  ],
+  "fixed_levels": [],
+  "metadata": {
+    "created": "2026-07-09T11:33:06.062485+00:00",
+    "fitness": null,
+    "fitness_method": null,
+    "fitness_source": null,
+    "fitness_observation_indices": null,
+    "fitness_targets": null,
+    "run_steps": 0,
+    "total_reward": 0.0,
+    "last_reward": null,
+    "success": null,
+    "random_seed": null
+  }
+}

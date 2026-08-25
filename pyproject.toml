@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dpct-run"
+version = "0.1.0"
+description = "Runtime-only package for running saved DPCT individuals without the evolution/optimizer stack"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "Apache-2.0"}
+authors = [{name = "perceptualrobots", email = "rupert@perceptualrobots.com"}]
+keywords = ["perceptual-control-theory", "gymnasium", "tensorflow", "runtime"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+  "tensorflow>=2.16.0,<2.17.0",
+  "ml-dtypes~=0.3.1",
+  "gymnasium>=0.29.0",
+  "pygame>=2.0.0",
+  "numpy>=1.26.0,<2.0.0",
+]
+
+[project.optional-dependencies]
+plots = ["matplotlib>=3.9.0", "networkx>=3.0.0"]
+video = ["imageio>=2.34.0", "imageio-ffmpeg>=0.5.1"]
+comet = ["comet_ml"]
+legacy = ["pct>=0.1.1"]
+box2d = ["gymnasium[box2d]", "swig"]
+dev = ["pytest", "matplotlib>=3.9.0", "networkx>=3.0.0", "imageio>=2.34.0", "imageio-ffmpeg>=0.5.1", "pct>=0.1.1"]
+all = ["matplotlib>=3.9.0", "networkx>=3.0.0", "imageio>=2.34.0", "imageio-ffmpeg>=0.5.1", "comet_ml", "pct>=0.1.1", "gymnasium[box2d]", "swig"]
+
+[project.urls]
+Repository = "https://github.com/perceptualrobots/dpct-run"
+Issues = "https://github.com/perceptualrobots/dpct-run/issues"
+
+[project.scripts]
+dpct-run-individual = "dpct_run.applications.run_individual:main"
+dpct-run = "dpct_run.applications.run_individual:main"
+
+[tool.setuptools.packages.find]
+include = ["dpct_run", "dpct_run.*"]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+  "ignore:Matplotlib is currently using agg.*:UserWarning",
+]
