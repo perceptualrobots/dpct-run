@@ -21,16 +21,24 @@ Runtime-only package for running saved Deep Perceptual Control Theory (DPCT) ind
 - DEAP/Optuna dependencies
 - Comet experiment logging for evolutionary runs
 
-## Install from GitHub
+## Install
+
+From PyPI:
 
 ```bash
-pip install git+https://github.com/perceptualrobots/dpct-run.git
+pip install dpct-run
 ```
 
 Optional extras:
 
 ```bash
-pip install "dpct-run[plots,video,comet,legacy] @ git+https://github.com/perceptualrobots/dpct-run.git"
+pip install "dpct-run[plots,video,comet,legacy]"
+```
+
+From GitHub:
+
+```bash
+pip install git+https://github.com/perceptualrobots/dpct-run.git
 ```
 
 ## CLI examples
