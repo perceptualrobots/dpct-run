@@ -1,8 +1,11 @@
 from pathlib import Path
+import builtins
 
 import numpy as np
+import pytest
 
 from dpct_run import DHPCTIndividual
+import dpct_run.individual as individual_module
 
 
 def test_runtime_individual_has_no_evolution_api():
@@ -152,3 +155,121 @@ def test_cli_reports_saved_evaluation_seed_when_no_override(monkeypatch, capsys)
 
     assert rc == 0
     assert "Seed: 42" in captured.out
+
+
+def test_task_success_requires_dpct_env_when_unavailable(monkeypatch):
+    original_import = builtins.__import__
+
+    def fail_dpct_env_import(name, *args, **kwargs):
+        if name == "dpct_env.processors":
+            raise ImportError("dpct-env unavailable")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fail_dpct_env_import)
+    individual = type(
+        "FakeIndividual",
+        (),
+        {"env_name": "MountainCarContinuous-v0", "last_environment_history": object()},
+    )()
+
+    with pytest.raises(individual_module.DpctEnvRequiredError) as exc_info:
+        individual_module._get_environment_task_success(individual)
+
+    message = str(exc_info.value)
+    assert "dpct-env is required" in message
+    assert "MountainCarContinuous-v0" in message
+    assert "python -m pip install" in message
+
+
+def test_generic_task_success_falls_back_when_dpct_env_is_unavailable(monkeypatch):
+    original_import = builtins.__import__
+
+    def fail_dpct_env_import(name, *args, **kwargs):
+        if name == "dpct_env.processors":
+            raise ImportError("dpct-env unavailable")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fail_dpct_env_import)
+    individual = type(
+        "FakeIndividual",
+        (),
+        {"env_name": "Pendulum-v1", "last_environment_history": object()},
+    )()
+
+    assert individual_module._get_environment_task_success(individual) is None
+
+
+def test_task_success_reports_broken_dpct_env_dependency(monkeypatch):
+    original_import = builtins.__import__
+
+    def fail_dpct_env_import(name, *args, **kwargs):
+        if name == "dpct_env.processors":
+            raise ModuleNotFoundError("No module named 'matplotlib'", name="matplotlib")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fail_dpct_env_import)
+    individual = type(
+        "FakeIndividual",
+        (),
+        {"env_name": "MountainCarContinuous-v0", "last_environment_history": object()},
+    )()
+
+    with pytest.raises(individual_module.DpctEnvRequiredError) as exc_info:
+        individual_module._get_environment_task_success(individual)
+
+    message = str(exc_info.value)
+    assert "installed but could not be imported" in message
+    assert "matplotlib" in message
+
+
+def test_environment_specific_fitness_requires_dpct_env_when_unavailable(monkeypatch):
+    original_import = builtins.__import__
+
+    def fail_dpct_env_import(name, *args, **kwargs):
+        if name == "dpct_env.fitness":
+            raise ImportError("dpct-env unavailable")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fail_dpct_env_import)
+
+    with pytest.raises(individual_module.DpctEnvRequiredError) as exc_info:
+        individual_module._resolve_environment_fitness_function(
+            "height_achieved",
+            env_name="MountainCarContinuous-v0",
+        )
+
+    message = str(exc_info.value)
+    assert "dpct-env is required" in message
+    assert "height_achieved" in message
+    assert "python -m pip install" in message
+
+
+def test_environment_specific_fitness_dependency_is_checked_before_rollout(monkeypatch):
+    individual = DHPCTIndividual("CartPole-v1", [2, 1], random_seed=11)
+    individual.compile()
+
+    def fail_fitness_resolution(*args, **kwargs):
+        raise individual_module.DpctEnvRequiredError("missing dpct-env")
+
+    monkeypatch.setattr(
+        individual_module,
+        "_resolve_environment_fitness_function",
+        fail_fitness_resolution,
+    )
+
+    import gymnasium as gym
+
+    monkeypatch.setattr(
+        gym,
+        "make",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("rollout started")),
+    )
+
+    with pytest.raises(individual_module.DpctEnvRequiredError, match="missing dpct-env"):
+        individual.run(fitness_method="height_achieved")
+
+
+def test_dpct_env_required_error_is_exported():
+    from dpct_run import DpctEnvRequiredError
+
+    assert DpctEnvRequiredError is individual_module.DpctEnvRequiredError

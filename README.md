@@ -41,6 +41,19 @@ From GitHub:
 pip install git+https://github.com/perceptualrobots/dpct-run.git
 ```
 
+### Environment-specific support
+
+Rollout task-success interpretation and environment-specific fitness methods are
+provided by `dpct-env`. Install a compatible `dpct-env` checkout into the same
+Python environment when running individuals:
+
+```bash
+python -m pip install -e /path/to/dpct-env
+```
+
+`dpct-run` raises `DpctEnvRequiredError` with installation guidance rather than
+silently reporting generic or misleading success when `dpct-env` is unavailable.
+
 ## CLI examples
 
 Show a saved config summary:
@@ -82,4 +95,4 @@ print(fitness, individual.success, individual.total_reward)
 
 `dpct-run` follows the saved DPCT config schema produced by the full DPCT package. Treat `best_individual.json` as the primary interchange artifact.
 
-This initial extraction targets classic Gymnasium-style environments and generic built-in fitness methods (`cumulative_reward`, `evaluation_steps`, `rms`, `mae`, adjusted RMS/MAE). Environment-specific scoring from `dpct-env` is optional and only used if that package is separately installed.
+This initial extraction targets classic Gymnasium-style environments and generic built-in fitness methods (`cumulative_reward`, `evaluation_steps`, `rms`, `mae`, adjusted RMS/MAE). Environment-specific scoring and task-success interpretation are delegated to `dpct-env`; runtime evaluation fails clearly if that package is required but unavailable.
