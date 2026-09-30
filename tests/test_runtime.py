@@ -13,7 +13,16 @@ def test_runtime_individual_has_no_evolution_api():
     assert not hasattr(DHPCTIndividual, "mutate")
 
 
-def test_load_fixture_and_run_short_rollout():
+def test_load_fixture_and_run_short_rollout(monkeypatch):
+    class FixtureResultsProcessor:
+        def get_task_success(self, individual, history, env_name=None):
+            return None
+
+    monkeypatch.setattr(
+        individual_module,
+        "_resolve_environment_results_processor",
+        lambda env_name: FixtureResultsProcessor(),
+    )
     cfg = DHPCTIndividual.load_config(str(Path(__file__).parent / "fixtures" / "MountainCarContinuous-cdf7cc.json"))
     ind = DHPCTIndividual.from_config(cfg)
     fitness = ind.evaluate(steps=5, early_termination=True)
