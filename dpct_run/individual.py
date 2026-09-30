@@ -337,6 +337,9 @@ class DHPCTIndividual:
         # When top_level_obs_indices is set, those dimensions are excluded.
         self.level0_observation_indices = None
         self.random_seed = random_seed
+        # Keep genome initialization and rollout evaluation seeds distinct.
+        # Saved configs restore evaluation_seed for deterministic replay.
+        self.evaluation_seed = None
         self._smooth_factors_provided = smooth_factors is not None
 
         # Validate environment early so action dimensions are available for
@@ -1540,12 +1543,21 @@ DHPCTIndividual.run = _run
 
 
 # %% ../nbs/00_individual.ipynb #25c72754
-def _evaluate(self, nevals: int = 1, aggregate: str = "mean", **run_kwargs) -> float:
+def _evaluate(
+    self,
+    nevals: int = 1,
+    aggregate: str = "mean",
+    evaluation_seed: Optional[int] = None,
+    **run_kwargs,
+) -> float:
     """Evaluate fitness across multiple runs and aggregate the result.
 
     Args:
         nevals: Number of evaluations to run.
         aggregate: Aggregation method ('mean', 'max', 'min', 'median').
+        evaluation_seed: Optional environment seed. When omitted, use the
+            seed restored from saved metadata, falling back to the genome seed
+            for older configs.
         **run_kwargs: Additional keyword arguments forwarded to ``run``.
 
     Returns:
@@ -1577,16 +1589,22 @@ def _evaluate(self, nevals: int = 1, aggregate: str = "mean", **run_kwargs) -> f
         run_kwargs.pop(_template_key, None)
 
     fitnesses: List[float] = []
-    base_seed = self.random_seed
+    original_seed = self.random_seed
+    if evaluation_seed is not None:
+        self.evaluation_seed = int(evaluation_seed)
+    saved_evaluation_seed = getattr(self, "evaluation_seed", None)
+    base_evaluation_seed = (
+        int(saved_evaluation_seed) if saved_evaluation_seed is not None else original_seed
+    )
 
     try:
         for i in range(nevals):
-            if base_seed is not None:
-                self.random_seed = int(base_seed) + i
+            if base_evaluation_seed is not None:
+                self.random_seed = int(base_evaluation_seed) + i
             fitnesses.append(float(self.run(**run_kwargs)))
     finally:
-        # Keep object state stable for callers outside this evaluation.
-        self.random_seed = base_seed
+        # Initialization metadata belongs to the genome, not the rollout.
+        self.random_seed = original_seed
 
     if aggregate == "mean":
         return float(np.mean(fitnesses))

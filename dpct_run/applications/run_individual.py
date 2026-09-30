@@ -220,8 +220,6 @@ def main(argv: list[str] | None = None) -> int:
                 for idx, seed in enumerate(seed_values, start=1):
                     run_start = time.perf_counter()
                     individual = _individual_from_config_file(config_path)
-                    if seed is not None:
-                        individual.random_seed = seed
                     video_output_path: Optional[Path] = None
                     evaluate_kwargs = {
                         "nevals": args.nevals,
@@ -234,6 +232,8 @@ def main(argv: list[str] | None = None) -> int:
                         "fitness_kwargs": fitness_kwargs,
                         "verbose": args.verbose,
                     }
+                    if seed is not None:
+                        evaluate_kwargs["evaluation_seed"] = seed
                     if args.history_dir:
                         evaluate_kwargs["record_history"] = True
 
@@ -260,7 +260,11 @@ def main(argv: list[str] | None = None) -> int:
                     run_elapsed = time.perf_counter() - run_start
                     actual_steps = getattr(individual, "run_steps", 0)
                     success = getattr(individual, "success", None)
-                    effective_seed = seed if seed is not None else getattr(individual, "random_seed", None)
+                    effective_seed = seed
+                    if effective_seed is None:
+                        effective_seed = getattr(individual, "evaluation_seed", None)
+                    if effective_seed is None:
+                        effective_seed = getattr(individual, "random_seed", None)
                     run_results.append((effective_seed, fitness, actual_steps, success))
                     seed_str = "None" if effective_seed is None else str(effective_seed)
                     success_str = "None" if success is None else str(bool(success))
