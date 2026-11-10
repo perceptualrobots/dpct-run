@@ -99,7 +99,11 @@ dpct-run-individual https://www.comet.com/mountaincarcontinuous-v0/evaluation-st
 dpct-run-individual https://www.comet.com/mountaincarcontinuous-v0/evaluation-steps/a3719e34e58e40c2a474b5049e2dfb57 --run --steps 999 --early-termination --video-out /tmp/dpct-comet-history/eval_steps.gif --video-fps 20
 
 
-dpct-run-individual https://www.comet.com/pendulum-v1/evaluation-steps/912de384f130424985ac3bbd3776e631 --run  --early-termination --video-out /tmp/dpct-comet-history/pendulum.gif --video-fps 20
+dpct-run-individual https://www.comet.com/pendulum-v1/evaluation-steps/912de384f130424985ac3bbd3776e631 --run  --early-termination --video-out /tmp/dpct-comet-history/pendulum.gif 
+
+
+dpct-run-individual https://www.comet.com/pendulum-v1/evaluation-steps/912de384f130424985ac3bbd3776e631 --run --steps 1 --verbose
+
 
 
 ```
