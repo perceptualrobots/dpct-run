@@ -31,6 +31,25 @@ def test_load_fixture_and_run_short_rollout(monkeypatch):
     assert ind.total_reward is not None
 
 
+def test_shared_top_and_level_zero_observation_inputs_compile_and_run():
+    individual = DHPCTIndividual(
+        "Pendulum-v1",
+        [6, 2, 5, 3],
+        top_level_obs_indices=[0, 1, 2],
+        zerolevel_inputs_indexes=[0, 1, 2],
+        random_seed=1,
+    )
+    individual.compile()
+
+    assert individual.level0_observation_indices == [0, 1, 2]
+    assert individual.model.get_layer("PL00").get_weights()[0].shape == (3, 6)
+
+    fitness = individual.evaluate(steps=3)
+
+    assert np.isfinite(fitness)
+    assert individual.run_steps == 3
+
+
 def test_cli_show_config_json(capsys):
     from dpct_run.applications.run_individual import main
 
@@ -164,6 +183,60 @@ def test_cli_reports_saved_evaluation_seed_when_no_override(monkeypatch, capsys)
 
     assert rc == 0
     assert "Seed: 42" in captured.out
+
+
+def test_cli_uses_saved_run_steps_by_default(monkeypatch, capsys):
+    from dpct_run.applications import run_individual
+
+    class FakeIndividual:
+        random_seed = 11
+        evaluation_seed = 42
+        run_steps = 17
+        success = True
+
+        def __init__(self):
+            self.evaluate_calls = []
+
+        def evaluate(self, **kwargs):
+            self.evaluate_calls.append(kwargs)
+            return 1.0
+
+    fake = FakeIndividual()
+    monkeypatch.setattr(run_individual, "_individual_from_config_file", lambda path: fake)
+    path = Path(__file__).parent / "fixtures" / "MountainCarContinuous-cdf7cc.json"
+
+    rc = run_individual.main([str(path), "--run"])
+    captured = capsys.readouterr()
+
+    assert rc == 0
+    assert fake.evaluate_calls[0]["steps"] == 17
+    assert "Configured steps: 17" in captured.out
+
+
+def test_cli_steps_override_saved_run_steps(monkeypatch, capsys):
+    from dpct_run.applications import run_individual
+
+    class FakeIndividual:
+        random_seed = 11
+        evaluation_seed = 42
+        run_steps = 17
+        success = True
+
+        def __init__(self):
+            self.evaluate_calls = []
+
+        def evaluate(self, **kwargs):
+            self.evaluate_calls.append(kwargs)
+            return 1.0
+
+    fake = FakeIndividual()
+    monkeypatch.setattr(run_individual, "_individual_from_config_file", lambda path: fake)
+    path = Path(__file__).parent / "fixtures" / "MountainCarContinuous-cdf7cc.json"
+
+    rc = run_individual.main([str(path), "--run", "--steps", "3"])
+
+    assert rc == 0
+    assert fake.evaluate_calls[0]["steps"] == 3
 
 
 def test_task_success_requires_dpct_env_when_unavailable(monkeypatch):

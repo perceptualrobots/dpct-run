@@ -314,7 +314,8 @@ class DHPCTIndividual:
                 ``top_level_obs_indices`` is also provided and there are at
                 least two levels.  When set, level-0 perception receives a gathered subset of
                 observations at these indices via a fully-connected Dense layer
-                instead of the full observation vector.
+                instead of the full observation vector. These inputs may overlap
+                with ``top_level_obs_indices``.
         
         Raises:
             ValueError: If levels is empty or configuration is invalid
@@ -333,8 +334,7 @@ class DHPCTIndividual:
         self.top_level_obs_indices = top_level_obs_indices
         # Ignore zerolevel_inputs_indexes when there is only one level
         self.zerolevel_inputs_indexes = zerolevel_inputs_indexes if len(levels) > 1 else None
-        # Filled by compile(): the effective observation indices feeding PL00.
-        # When top_level_obs_indices is set, those dimensions are excluded.
+        # Filled by compile(): the observation indices feeding PL00.
         self.level0_observation_indices = None
         self.random_seed = random_seed
         # Keep genome initialization and rollout evaluation seeds distinct.
@@ -706,9 +706,8 @@ def _compile_impl(self):
     def _effective_level0_observation_indices() -> Optional[List[int]]:
         """Return observation indices connected to level-0 perceptions.
 
-        When the top level is wired directly to observations, those observation
-        dimensions are removed from the bottom-level input so the same raw
-        observation is not controlled independently at both hierarchy ends.
+        The level-0 and direct top-level pathways may observe the same
+        environment dimensions.
         """
         if num_levels == 1:
             return None
@@ -720,15 +719,8 @@ def _compile_impl(self):
         else:
             return None
 
-        if self.top_level_obs_indices is not None:
-            top_indices = set(int(idx) for idx in self.top_level_obs_indices)
-            candidate_indices = [idx for idx in candidate_indices if int(idx) not in top_indices]
-
         if not candidate_indices:
-            raise ValueError(
-                "Level-0 observation inputs are empty after excluding "
-                "top_level_obs_indices from the bottom-level perception input"
-            )
+            raise ValueError("Level-0 observation inputs cannot be empty")
         return candidate_indices
 
     level0_observation_indices = _effective_level0_observation_indices()
@@ -755,10 +747,8 @@ def _compile_impl(self):
                     trainable=False,
                 )(gathered_obs)
             elif level0_observation_indices is not None:
-                # T024b / top-level direct observation: gather the effective
-                # level-0 observation subset.  If top_level_obs_indices is set,
-                # those dimensions are intentionally excluded from this bottom
-                # input so they are controlled only by the direct top-level path.
+                # T024b / top-level direct observation: gather the configured
+                # level-0 observation subset.
                 gathered_obs = layers.Lambda(
                     lambda x, idx=level0_observation_indices: tf.gather(x, idx, axis=1),
                     name=f"GatherObsL{level_name}"

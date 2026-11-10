@@ -488,10 +488,8 @@ def _from_config_impl(cls, config: Dict[str, Any]) -> "DHPCTIndividual":
             and np.asarray(kernel).shape != np.asarray(current[0]).shape
             and np.asarray(kernel).shape[1] == np.asarray(current[0]).shape[1]
         ):
-            # Backward compatibility for configs saved before
-            # top_level_obs_indices dimensions were excluded from PL00.  Old
-            # PL00 kernels may still have rows for the full observation vector;
-            # select only the rows that feed the current effective level-0 input.
+            # A saved PL00 kernel can include rows for the full observation
+            # vector while the hierarchy selects a subset for level 0.
             effective_indices = getattr(individual, "level0_observation_indices", None)
             if effective_indices is not None:
                 original_indices = hierarchy.get("zerolevel_inputs_indexes", None)

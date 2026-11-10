@@ -1,5 +1,10 @@
 
- 
+## Runtime defaults
+
+When `--run` is used without `--steps`, `dpct-run-individual` replays the
+saved `metadata.run_steps` value from the configuration. Configurations without
+a positive saved value use 500 steps. Pass `--steps` to override either default.
+
 ## CartPole
 
 ### Legacy .properties config examples
@@ -92,8 +97,12 @@ dpct-run-individual https://www.comet.com/mountaincarcontinuous-v0/rms-top/9730f
 dpct-run-individual https://www.comet.com/mountaincarcontinuous-v0/evaluation-steps/a3719e34e58e40c2a474b5049e2dfb57 --run --steps 999 --early-termination --seed 1 --video-out /tmp/dpct-run-individual-history/mcc_rollout.mp4 --video-fps 30
 
 dpct-run-individual https://www.comet.com/mountaincarcontinuous-v0/evaluation-steps/a3719e34e58e40c2a474b5049e2dfb57 --run --steps 999 --early-termination --video-out /tmp/dpct-comet-history/eval_steps.gif --video-fps 20
-```
 
+
+dpct-run-individual https://www.comet.com/pendulum-v1/evaluation-steps/912de384f130424985ac3bbd3776e631 --run  --early-termination --video-out /tmp/dpct-comet-history/pendulum.gif --video-fps 20
+
+
+```
 
 
 

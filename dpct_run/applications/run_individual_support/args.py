@@ -73,8 +73,8 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--steps",
         type=int,
-        default=500,
-        help="Maximum number of environment steps (default: 500)",
+        default=None,
+        help="Maximum number of environment steps (default: saved run_steps, otherwise 500)",
     )
     parser.add_argument(
         "--render",
