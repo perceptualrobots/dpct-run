@@ -53,6 +53,8 @@ from dpct_run.applications.run_individual_support.summary import (  # noqa: E402
 )
 from dpct_run.visualization import draw_traditional_pcnn  # noqa: E402
 
+_DEFAULT_STEPS = 500
+
 
 def _resolve_config_source(source: str) -> Path:
     """Resolve a local config file or Comet URL to a local config path.
@@ -89,6 +91,15 @@ def _resolve_video_output_path(base_output: str, run_index: int, total_runs: int
         return base_path
 
     return base_path.with_name(f"{base_path.stem}_run_{run_index:03d}{base_path.suffix}")
+
+
+def _resolve_steps(requested_steps: int | None, saved_steps: object) -> int:
+    """Return an explicit step limit, saved run length, or the fallback limit."""
+    if requested_steps is not None:
+        return requested_steps
+    if isinstance(saved_steps, int) and not isinstance(saved_steps, bool) and saved_steps > 0:
+        return saved_steps
+    return _DEFAULT_STEPS
 
 
 class _RolloutVideoRecorder:
@@ -161,6 +172,10 @@ def main(argv: list[str] | None = None) -> int:
             print("--nevals must be >= 1.", file=sys.stderr)
             return 2
 
+        if args.steps is not None and args.steps < 1:
+            print("--steps must be >= 1.", file=sys.stderr)
+            return 2
+
         if not _has_requested_action(args):
             _print_action_hint(parser)
             return 0
@@ -220,13 +235,12 @@ def main(argv: list[str] | None = None) -> int:
                 for idx, seed in enumerate(seed_values, start=1):
                     run_start = time.perf_counter()
                     individual = _individual_from_config_file(config_path)
-                    if seed is not None:
-                        individual.random_seed = seed
+                    effective_steps = _resolve_steps(args.steps, getattr(individual, "run_steps", None))
                     video_output_path: Optional[Path] = None
                     evaluate_kwargs = {
                         "nevals": args.nevals,
                         "aggregate": args.aggregate,
-                        "steps": args.steps,
+                        "steps": effective_steps,
                         "early_termination": args.early_termination,
                         "render": args.render,
                         "fitness_method": args.fitness_method,
@@ -234,6 +248,8 @@ def main(argv: list[str] | None = None) -> int:
                         "fitness_kwargs": fitness_kwargs,
                         "verbose": args.verbose,
                     }
+                    if seed is not None:
+                        evaluate_kwargs["evaluation_seed"] = seed
                     if args.history_dir:
                         evaluate_kwargs["record_history"] = True
 
@@ -260,14 +276,18 @@ def main(argv: list[str] | None = None) -> int:
                     run_elapsed = time.perf_counter() - run_start
                     actual_steps = getattr(individual, "run_steps", 0)
                     success = getattr(individual, "success", None)
-                    effective_seed = seed if seed is not None else getattr(individual, "random_seed", None)
+                    effective_seed = seed
+                    if effective_seed is None:
+                        effective_seed = getattr(individual, "evaluation_seed", None)
+                    if effective_seed is None:
+                        effective_seed = getattr(individual, "random_seed", None)
                     run_results.append((effective_seed, fitness, actual_steps, success))
                     seed_str = "None" if effective_seed is None else str(effective_seed)
                     success_str = "None" if success is None else str(bool(success))
                     if len(seed_values) == 1:
                         print(
                             f"Run complete. Seed: {seed_str} | Fitness: {fitness} | "
-                            f"Success: {success_str} | Configured steps: {args.steps} | "
+                            f"Success: {success_str} | Configured steps: {effective_steps} | "
                             f"Actual steps run: {actual_steps} | "
                             f"N evals: {args.nevals} ({args.aggregate}) | "
                             f"Elapsed seconds: {run_elapsed:.3f}"
@@ -275,7 +295,7 @@ def main(argv: list[str] | None = None) -> int:
                     else:
                         print(
                             f"Run {idx}: Seed: {seed_str} | Fitness: {fitness} | "
-                            f"Success: {success_str} | Configured steps: {args.steps} | "
+                            f"Success: {success_str} | Configured steps: {effective_steps} | "
                             f"Actual steps run: {actual_steps} | "
                             f"N evals: {args.nevals} ({args.aggregate}) | "
                             f"Elapsed seconds: {run_elapsed:.3f}"

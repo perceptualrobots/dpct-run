@@ -308,6 +308,7 @@ def _config_impl(self) -> Dict[str, Any]:
             "last_reward": _to_serializable(getattr(self, "last_reward", None)),
             "success": _to_serializable(getattr(self, "success", False)),
             "random_seed": _to_serializable(self.random_seed),
+            "evaluation_seed": _to_serializable(getattr(self, "evaluation_seed", None)),
         },
     }
 
@@ -487,10 +488,8 @@ def _from_config_impl(cls, config: Dict[str, Any]) -> "DHPCTIndividual":
             and np.asarray(kernel).shape != np.asarray(current[0]).shape
             and np.asarray(kernel).shape[1] == np.asarray(current[0]).shape[1]
         ):
-            # Backward compatibility for configs saved before
-            # top_level_obs_indices dimensions were excluded from PL00.  Old
-            # PL00 kernels may still have rows for the full observation vector;
-            # select only the rows that feed the current effective level-0 input.
+            # A saved PL00 kernel can include rows for the full observation
+            # vector while the hierarchy selects a subset for level 0.
             effective_indices = getattr(individual, "level0_observation_indices", None)
             if effective_indices is not None:
                 original_indices = hierarchy.get("zerolevel_inputs_indexes", None)
@@ -523,6 +522,7 @@ def _from_config_impl(cls, config: Dict[str, Any]) -> "DHPCTIndividual":
     individual.fitness_source = config.get("metadata", {}).get("fitness_source", None)
     individual.fitness_observation_indices = config.get("metadata", {}).get("fitness_observation_indices", None)
     individual.fitness_targets = config.get("metadata", {}).get("fitness_targets", None)
+    individual.evaluation_seed = config.get("metadata", {}).get("evaluation_seed", None)
     individual.run_steps = config.get("metadata", {}).get("run_steps", 0)
     individual.total_reward = config.get("metadata", {}).get("total_reward", 0.0)
     individual.last_reward = config.get("metadata", {}).get("last_reward", None)
