@@ -105,6 +105,8 @@ dpct-run-individual https://www.comet.com/pendulum-v1/evaluation-steps/912de384f
 dpct-run-individual https://www.comet.com/pendulum-v1/evaluation-steps/912de384f130424985ac3bbd3776e631 --run --steps 1 --verbose
 
 
+dpct-run-individual https://www.comet.com/pendulum-v1/evaluation-steps-joint-thresholds-archive-main7151982/d1fd4046a6994be0944d9a15743f0e75 --run
+
 
 ```
 
