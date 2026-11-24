@@ -1110,6 +1110,8 @@ class DpctEnvRequiredError(RuntimeError):
 
 
 _TASK_SUCCESS_PROCESSOR_ENV_NAMES = {
+    "pendulum_v1",
+    "pendulum",
     "mountaincar_v0",
     "mountaincar",
     "mountaincarcontinuous_v0",
@@ -1350,6 +1352,18 @@ def _run(
     import gymnasium as gym
     effective_render_mode = render_mode if render_mode is not None else ("human" if render else None)
     env = gym.make(self.env_name, render_mode=effective_render_mode)
+    if self.env_name == "Pendulum-v1":
+        from dpct_env.wrappers import PendulumSuccessTermination
+        options = {
+            "window_steps": getattr(self, "pendulum_settling_window_steps", None),
+            "min_settled_ratio": getattr(self, "pendulum_min_settled_ratio", None),
+            "observation_threshold": getattr(self, "pendulum_observation_threshold", None),
+            "gradient_threshold": getattr(self, "pendulum_gradient_threshold", None),
+        }
+        env = PendulumSuccessTermination(env, terminate_on_success=early_termination,
+                                         **{key: value for key, value in options.items() if value is not None})
+    self.success = None
+    final_step_success = False
     capture_frames = effective_render_mode == "rgb_array" or frame_callback is not None
     self.last_environment_history = None
     
@@ -1437,6 +1451,8 @@ def _run(
             # Take step in environment
             next_observation, reward, terminated, truncated, info = env.step(env_action)
             done = terminated or truncated
+            if self.env_name == "Pendulum-v1":
+                final_step_success = bool(env.success)
 
             if capture_frames:
                 frame = env.render()
@@ -1534,7 +1550,7 @@ def _run(
     if fitness_method == "cumulative_reward":
         fitness = total_reward
     elif fitness_method == "evaluation_steps":
-        fitness = float(step_count)
+        fitness = float(steps + 1 if self.env_name == "Pendulum-v1" and not final_step_success else step_count)
     elif fitness_method in {"rms", "rms_adjusted", "adjusted_rms"}:
         from dpct_run.individual_utils import calculate_rms_error
 
@@ -1615,7 +1631,9 @@ def _run(
         processor=task_success_processor,
     )
 
-    if task_success is not None:
+    if self.env_name == "Pendulum-v1":
+        self.success = final_step_success
+    elif task_success is not None:
         self.success = task_success
     else:
         self.success = generic_success
