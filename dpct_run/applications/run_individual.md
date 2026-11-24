@@ -108,6 +108,12 @@ dpct-run-individual https://www.comet.com/pendulum-v1/evaluation-steps/912de384f
 dpct-run-individual https://www.comet.com/pendulum-v1/evaluation-steps-joint-thresholds-archive-main7151982/d1fd4046a6994be0944d9a15743f0e75 --run
 
 
+dpct-run-individual https://www.comet.com/pendulum-v1/cumulative-reward-random-structure-direct-top-smooth-fixed-thresholds/c95533bb2ae24e8e9c6f245fa05701b2 --run --render
+
+dpct-run-individual C:\\tmp\\comet\\pendulum-v1\\cumulative-reward-random-structure-direct-top-smooth-fixed-thresholds\\c95533bb2ae24e8e9c6f245fa05701b2\\best_individual-level0-index-2.json --run --render
+
+
+
 ```
 
 
