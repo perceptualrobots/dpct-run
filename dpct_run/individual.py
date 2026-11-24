@@ -706,8 +706,9 @@ def _compile_impl(self):
     def _effective_level0_observation_indices() -> Optional[List[int]]:
         """Return observation indices connected to level-0 perceptions.
 
-        The level-0 and direct top-level pathways may observe the same
-        environment dimensions.
+        An explicit level-0 subset is used as-is, including intentional overlap
+        with the direct top-level pathway. Otherwise, level 0 receives the
+        complement of the directly connected top-level observations.
         """
         if num_levels == 1:
             return None
@@ -715,7 +716,8 @@ def _compile_impl(self):
         if self.zerolevel_inputs_indexes is not None:
             candidate_indices = list(self.zerolevel_inputs_indexes)
         elif self.top_level_obs_indices is not None:
-            candidate_indices = list(range(obs_dim))
+            top_indices = set(int(idx) for idx in self.top_level_obs_indices)
+            candidate_indices = [idx for idx in range(obs_dim) if idx not in top_indices]
         else:
             return None
 

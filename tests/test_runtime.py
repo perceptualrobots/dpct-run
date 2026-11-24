@@ -50,6 +50,50 @@ def test_shared_top_and_level_zero_observation_inputs_compile_and_run():
     assert individual.run_steps == 3
 
 
+def test_null_level_zero_subset_uses_complement_and_loads_saved_kernel():
+    original = DHPCTIndividual(
+        "Pendulum-v1", [6, 2], top_level_obs_indices=[0, 1],
+        zerolevel_inputs_indexes=[2], random_seed=1,
+    )
+    original.compile()
+    config = original.config()
+    config["hierarchy"]["zerolevel_inputs_indexes"] = None
+
+    restored = DHPCTIndividual.from_config(config)
+    assert restored.zerolevel_inputs_indexes is None
+    assert restored.level0_observation_indices == [2]
+    np.testing.assert_array_equal(
+        restored.model.get_layer("PL00").get_weights()[0],
+        original.model.get_layer("PL00").get_weights()[0],
+    )
+    assert np.isfinite(restored.evaluate(steps=3))
+
+
+def test_null_level_zero_subset_slices_legacy_full_observation_kernel():
+    original = DHPCTIndividual(
+        "Pendulum-v1", [6, 2], top_level_obs_indices=[0, 1],
+        zerolevel_inputs_indexes=[0, 1, 2], random_seed=1,
+    )
+    original.compile()
+    config = original.config()
+    full_kernel = np.asarray(config["weights"]["PL00"])
+    config["hierarchy"]["zerolevel_inputs_indexes"] = None
+
+    restored = DHPCTIndividual.from_config(config)
+    assert restored.level0_observation_indices == [2]
+    np.testing.assert_array_equal(
+        restored.model.get_layer("PL00").get_weights()[0], full_kernel[[2], :]
+    )
+
+
+def test_null_level_zero_subset_rejects_empty_complement():
+    individual = DHPCTIndividual(
+        "Pendulum-v1", [2, 3], top_level_obs_indices=[0, 1, 2],
+    )
+    with pytest.raises(ValueError, match="Level-0 observation inputs cannot be empty"):
+        individual.compile()
+
+
 def test_cli_show_config_json(capsys):
     from dpct_run.applications.run_individual import main
 
