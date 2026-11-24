@@ -303,6 +303,10 @@ def _config_impl(self) -> Dict[str, Any]:
             "fitness_source": _to_serializable(getattr(self, "fitness_source", None)),
             "fitness_observation_indices": _to_serializable(getattr(self, "fitness_observation_indices", None)),
             "fitness_targets": _to_serializable(getattr(self, "fitness_targets", None)),
+            "pendulum_settling_window_steps": _to_serializable(getattr(self, "pendulum_settling_window_steps", None)),
+            "pendulum_min_settled_ratio": _to_serializable(getattr(self, "pendulum_min_settled_ratio", None)),
+            "pendulum_observation_threshold": _to_serializable(getattr(self, "pendulum_observation_threshold", None)),
+            "pendulum_gradient_threshold": _to_serializable(getattr(self, "pendulum_gradient_threshold", None)),
             "run_steps": _to_serializable(getattr(self, "run_steps", 0)),
             "total_reward": _to_serializable(getattr(self, "total_reward", 0.0)),
             "last_reward": _to_serializable(getattr(self, "last_reward", None)),
@@ -522,6 +526,11 @@ def _from_config_impl(cls, config: Dict[str, Any]) -> "DHPCTIndividual":
     individual.fitness_source = config.get("metadata", {}).get("fitness_source", None)
     individual.fitness_observation_indices = config.get("metadata", {}).get("fitness_observation_indices", None)
     individual.fitness_targets = config.get("metadata", {}).get("fitness_targets", None)
+    for name in (
+        "pendulum_settling_window_steps", "pendulum_min_settled_ratio",
+        "pendulum_observation_threshold", "pendulum_gradient_threshold",
+    ):
+        setattr(individual, name, config.get("metadata", {}).get(name))
     individual.evaluation_seed = config.get("metadata", {}).get("evaluation_seed", None)
     individual.run_steps = config.get("metadata", {}).get("run_steps", 0)
     individual.total_reward = config.get("metadata", {}).get("total_reward", 0.0)

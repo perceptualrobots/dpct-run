@@ -319,7 +319,7 @@ def test_generic_task_success_falls_back_when_dpct_env_is_unavailable(monkeypatc
     individual = type(
         "FakeIndividual",
         (),
-        {"env_name": "Pendulum-v1", "last_environment_history": object()},
+        {"env_name": "CartPole-v1", "last_environment_history": object()},
     )()
 
     assert individual_module._get_environment_task_success(individual) is None
